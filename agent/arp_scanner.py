@@ -1,32 +1,21 @@
-from scapy.all import ARP, Ether, srp
+from scapy.all import ARP, Ether, srp, conf
 
-def scan_network(network):
-    """
-    Performs an ARP scan on the specified network.
+def scan_network(ip_range="192.168.1.0/24"):
+    conf.iface = "Wi-Fi"   # or "Ethernet" (check your adapter name)
 
-    Args:
-        network (str): Example '192.168.1.0/24'
+    arp = ARP(pdst=ip_range)
+    ether = Ether(dst="ff:ff:ff:ff:ff:ff")
 
-    Returns:
-        list of dicts: [{'ip':..., 'mac':...}]
-    """
-
-    devices = []
-
-    arp_request = ARP(pdst=network)
-    broadcast = Ether(dst="ff:ff:ff:ff:ff:ff")
-
-    packet = broadcast / arp_request
+    packet = ether / arp
 
     result = srp(packet, timeout=2, verbose=0)[0]
 
-    for sent, received in result:
+    devices = []
 
-        device = {
+    for sent, received in result:
+        devices.append({
             "ip": received.psrc,
             "mac": received.hwsrc
-        }
-
-        devices.append(device)
+        })
 
     return devices
